@@ -119,6 +119,9 @@ function renderShop() {
   populateAddItems();
   renderDeckView();
 
+  // Ensure shop is visible (may have been hidden by showScreen)
+  shopEl.classList.remove('hidden');
+
   document.getElementById('next-battle-btn').addEventListener('click', () => {
     state.battleIndex++;
     onDone(state);
