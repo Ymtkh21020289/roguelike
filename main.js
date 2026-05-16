@@ -60,6 +60,51 @@ function buildInitialDOM() {
       <!-- Turn result -->
       <div id="turn-result" class="hidden"></div>
 
+      <!-- Hand reference table -->
+      <div id="hand-reference">
+        <div class="hand-ref-title">役 / 強さ指数</div>
+        <div class="hand-ref-row tier-s">
+          <span class="hand-ref-name">ロイヤルフラッシュ</span>
+          <span class="hand-ref-strength">10</span>
+        </div>
+        <div class="hand-ref-row tier-s">
+          <span class="hand-ref-name">ストレートフラッシュ</span>
+          <span class="hand-ref-strength">9</span>
+        </div>
+        <div class="hand-ref-row tier-a">
+          <span class="hand-ref-name">フォーカード</span>
+          <span class="hand-ref-strength">8</span>
+        </div>
+        <div class="hand-ref-row tier-a">
+          <span class="hand-ref-name">フルハウス</span>
+          <span class="hand-ref-strength">7</span>
+        </div>
+        <div class="hand-ref-row tier-a">
+          <span class="hand-ref-name">フラッシュ</span>
+          <span class="hand-ref-strength">6</span>
+        </div>
+        <div class="hand-ref-row">
+          <span class="hand-ref-name">ストレート</span>
+          <span class="hand-ref-strength">5</span>
+        </div>
+        <div class="hand-ref-row">
+          <span class="hand-ref-name">スリーカード</span>
+          <span class="hand-ref-strength">4</span>
+        </div>
+        <div class="hand-ref-row">
+          <span class="hand-ref-name">ツーペア</span>
+          <span class="hand-ref-strength">3</span>
+        </div>
+        <div class="hand-ref-row">
+          <span class="hand-ref-name">ワンペア</span>
+          <span class="hand-ref-strength">2</span>
+        </div>
+        <div class="hand-ref-row">
+          <span class="hand-ref-name">ハイカード</span>
+          <span class="hand-ref-strength">1</span>
+        </div>
+      </div>
+
       <!-- Artifact panel -->
       <div id="artifact-panel">
         <div class="artifact-panel-title">ARTIFACTS</div>
@@ -283,12 +328,19 @@ function battleWon() {
 }
 
 function openShopScreen() {
-  // Remove existing shop screen
+  // Remove existing shop screen if any
   const old = document.getElementById('shop-screen');
   if (old) old.remove();
 
+  // Hide all screens first
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+
   openShop(G, (updatedState) => {
     G = updatedState;
+    // Hide shop before switching to battle
+    const shopEl = document.getElementById('shop-screen');
+    if (shopEl) shopEl.classList.add('hidden');
+
     if (G.battleIndex >= TOTAL_BATTLES) {
       gameClear();
       return;
@@ -299,14 +351,9 @@ function openShopScreen() {
     showPhaseBanner(`BATTLE ${G.battleIndex + 1}`);
   });
 
-  // Show the shop screen that was just created
-  setTimeout(() => {
-    const shopEl = document.getElementById('shop-screen');
-    if (shopEl) {
-      document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-      shopEl.classList.remove('hidden');
-    }
-  }, 50);
+  // Show the shop screen that was just created by openShop()
+  const shopEl = document.getElementById('shop-screen');
+  if (shopEl) shopEl.classList.remove('hidden');
 }
 
 function gameOver() {
