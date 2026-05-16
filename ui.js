@@ -233,7 +233,11 @@ export function showTurnResult(log, container) {
 // ── SCREEN MANAGEMENT ─────────────────────────────────────────────────────
 
 export function showScreen(id) {
+  // Hide all .screen elements AND the dynamically created shop-screen
   $$('.screen').forEach(s => s.classList.add('hidden'));
+  const shopEl = document.getElementById('shop-screen');
+  if (shopEl) shopEl.classList.add('hidden');
+
   const el = $(`#${id}`);
   if (el) el.classList.remove('hidden');
 }
