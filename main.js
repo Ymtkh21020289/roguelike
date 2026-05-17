@@ -9,7 +9,7 @@ import {
 import {
   renderHand, renderPlayedCards, renderHUD, renderArtifacts,
   showTurnResult, showDamageFloat, showPhaseBanner, shakeElement,
-  showScreen, createCardEl
+  showScreen, hideAllScreens, createCardEl
 } from './ui.js';
 import { openShop } from './shop.js';
 
@@ -332,15 +332,11 @@ function openShopScreen() {
   const old = document.getElementById('shop-screen');
   if (old) old.remove();
 
-  // Hide all screens first
-  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  // Hide everything before building shop
+  hideAllScreens();
 
   openShop(G, (updatedState) => {
     G = updatedState;
-    // Hide shop before switching to battle
-    const shopEl = document.getElementById('shop-screen');
-    if (shopEl) shopEl.classList.add('hidden');
-
     if (G.battleIndex >= TOTAL_BATTLES) {
       gameClear();
       return;
@@ -351,9 +347,12 @@ function openShopScreen() {
     showPhaseBanner(`BATTLE ${G.battleIndex + 1}`);
   });
 
-  // Show the shop screen that was just created by openShop()
+  // openShop() creates #shop-screen synchronously — show it now
   const shopEl = document.getElementById('shop-screen');
-  if (shopEl) shopEl.classList.remove('hidden');
+  if (shopEl) {
+    shopEl.style.display = '';
+    shopEl.classList.remove('hidden');
+  }
 }
 
 function gameOver() {
