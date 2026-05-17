@@ -135,16 +135,29 @@ export function processTurn(state) {
   // Bot plays
   const botResult = botPickBest(shuffle([...state.deck]).slice(0, 10), []);
   const enemyHandEval = botResult.handEval;
-  const enemyDamage = getEffectiveStrength(enemyHandEval.name, enemyHandEval.strength, []);
+  const enemyStrength = getEffectiveStrength(enemyHandEval.name, enemyHandEval.strength, []);
+  const enemyDamage = enemyStrength;
+
+  // ── 強さ指数比較: 勝った側のみダメージを通す。同値は両方通す ──
+  const playerWins = playerResult.finalStrength > enemyStrength;
+  const enemyWins  = enemyStrength > playerResult.finalStrength;
+  const isDraw     = playerResult.finalStrength === enemyStrength;
+
+  const actualPlayerDamage = (playerWins || isDraw) ? playerResult.damage : 0;
+  const actualEnemyDamage  = (enemyWins  || isDraw) ? enemyDamage : 0;
 
   // Apply damage
-  state.enemy.hp = Math.max(0, state.enemy.hp - playerResult.damage);
-  state.player.hp = Math.max(0, state.player.hp - enemyDamage);
-  state.player.totalDamageDealt += playerResult.damage;
+  state.enemy.hp = Math.max(0, state.enemy.hp - actualPlayerDamage);
+  state.player.hp = Math.max(0, state.player.hp - actualEnemyDamage);
+  state.player.totalDamageDealt += actualPlayerDamage;
 
-  // Lifesteal
-  if (playerResult.lifesteal) {
-    state.player.hp = Math.min(state.player.maxHp, state.player.hp + playerResult.lifestealAmount);
+  // Lifesteal (only triggers if player actually dealt damage)
+  if (playerResult.lifesteal && actualPlayerDamage > 0) {
+    const healAmt = Math.floor(actualPlayerDamage / 2);
+    state.player.hp = Math.min(state.player.maxHp, state.player.hp + healAmt);
+    playerResult.lifestealAmount = healAmt;
+  } else {
+    playerResult.lifestealAmount = 0;
   }
 
   // Discard selected cards, keep rest in hand
@@ -166,18 +179,23 @@ export function processTurn(state) {
     }
   }
 
+  // winner は強さ指数の比較で決まる
+  const winner = playerWins ? 'player' : enemyWins ? 'enemy' : 'draw';
+
   const log = {
     playerCards: selectedCards,
     enemyCards: botResult.cards,
     playerHandName: playerHandEval.name,
     enemyHandName: enemyHandEval.name,
     playerStrength: playerResult.finalStrength,
-    enemyStrength: enemyDamage,
-    playerDamage: playerResult.damage,
-    enemyDamage,
-    lifesteal: playerResult.lifesteal,
+    enemyStrength,
+    playerDamage: actualPlayerDamage,
+    enemyDamage: actualEnemyDamage,
+    blockedPlayerDamage: playerWins || isDraw ? 0 : playerResult.damage, // blocked amount
+    blockedEnemyDamage:  enemyWins  || isDraw ? 0 : enemyDamage,
+    lifesteal: playerResult.lifesteal && actualPlayerDamage > 0,
     lifestealAmount: playerResult.lifestealAmount,
-    winner: playerResult.damage > enemyDamage ? 'player' : playerResult.damage < enemyDamage ? 'enemy' : 'draw',
+    winner,
     diceResult,
   };
 
