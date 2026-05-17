@@ -216,15 +216,28 @@ export function shakeElement(el) {
 // ── TURN RESULT POPUP ─────────────────────────────────────────────────────
 
 export function showTurnResult(log, container) {
+  const playerBlocked = log.blockedPlayerDamage > 0;
+  const enemyBlocked  = log.blockedEnemyDamage  > 0;
+
   container.innerHTML = `
     <div class="turn-result-inner">
-      <div>あなた: <span style="color:var(--gold)">${log.playerHandName}</span> (強さ: ${log.playerStrength})</div>
-      <div>敵: <span style="color:var(--gold)">${log.enemyHandName}</span> (強さ: ${log.enemyStrength})</div>
-      <div class="damage-text">-${log.playerDamage} (敵へ)</div>
-      ${log.lifesteal ? `<div class="heal-text">+${log.lifestealAmount} HP回復</div>` : ''}
-      <div style="color:var(--hp-red)">-${log.enemyDamage} (自分へ)</div>
-      <div class="${log.winner === 'player' ? 'win-text' : log.winner === 'enemy' ? 'damage-text' : ''}">${log.winner === 'player' ? '⭐ あなたの勝利!' : log.winner === 'enemy' ? '💀 敵の勝利!' : '引き分け'}</div>
-      ${log.diceResult ? `<div style="color:var(--gold)">🎲 ダイス: ${log.diceResult} ${log.diceResult >= 5 ? '→ 生き残り！' : '→ 失敗...'}</div>` : ''}
+      <div>あなた: <span style="color:var(--gold)">${log.playerHandName}</span> 強さ${log.playerStrength}</div>
+      <div>敵: <span style="color:var(--gold)">${log.enemyHandName}</span> 強さ${log.enemyStrength}</div>
+      <div style="margin-top:4px">
+        ${log.playerDamage > 0
+          ? `<span class="damage-text">▶ 敵へ ${log.playerDamage} ダメージ</span>`
+          : `<span style="color:#666">▶ 敵へのダメージ: <s>${log.blockedPlayerDamage}</s> ブロック</span>`}
+      </div>
+      ${log.lifesteal ? `<div class="heal-text">♥ HP +${log.lifestealAmount} 回復</div>` : ''}
+      <div>
+        ${log.enemyDamage > 0
+          ? `<span style="color:var(--hp-red)">▶ 自分へ ${log.enemyDamage} ダメージ</span>`
+          : `<span style="color:#666">▶ 敵の攻撃: <s>${log.blockedEnemyDamage}</s> ブロック</span>`}
+      </div>
+      <div style="margin-top:6px" class="${log.winner === 'player' ? 'win-text' : log.winner === 'enemy' ? 'damage-text' : 'heal-text'}">
+        ${log.winner === 'player' ? '⭐ あなたの勝利!' : log.winner === 'enemy' ? '💀 敵の勝利!' : '⚔ 引き分け (両方通す)'}
+      </div>
+      ${log.diceResult != null ? `<div style="color:var(--gold)">🎲 ダイス: ${log.diceResult} ${log.diceResult >= 5 ? '→ 生き残り！' : '→ 失敗...'}</div>` : ''}
     </div>
   `;
   container.classList.remove('hidden');
@@ -232,12 +245,24 @@ export function showTurnResult(log, container) {
 
 // ── SCREEN MANAGEMENT ─────────────────────────────────────────────────────
 
-export function showScreen(id) {
-  // Hide all .screen elements AND the dynamically created shop-screen
-  $$('.screen').forEach(s => s.classList.add('hidden'));
-  const shopEl = document.getElementById('shop-screen');
-  if (shopEl) shopEl.classList.add('hidden');
+const SCREEN_IDS = ['title-screen', 'battle-screen', 'shop-screen'];
 
-  const el = $(`#${id}`);
-  if (el) el.classList.remove('hidden');
+export function hideAllScreens() {
+  SCREEN_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  // Also hide any .screen element not in the list
+  document.querySelectorAll('.screen').forEach(el => {
+    el.style.display = 'none';
+  });
+}
+
+export function showScreen(id) {
+  hideAllScreens();
+  const el = document.getElementById(id);
+  if (el) {
+    el.style.display = '';
+    el.classList.remove('hidden');
+  }
 }
