@@ -156,9 +156,18 @@ function populateEffectItems() {
     const el = document.createElement('div');
     el.className = 'shop-item';
 
-    let descText = typeof effectDef.description === 'function'
-      ? effectDef.description('ワンペア', '♠', '♥')  // placeholder
-      : effectDef.description;
+    let descText;
+    if (typeof effectDef.description === 'function') {
+      if (effectDef.paramType === 'hand') {
+        descText = effectDef.description('選択した役');
+      } else if (effectDef.paramType === 'dualSuit') {
+        descText = effectDef.description(null, null); // shows generic text
+      } else {
+        descText = effectDef.description();
+      }
+    } else {
+      descText = effectDef.description;
+    }
 
     el.innerHTML = `
       <div style="font-size:20px;width:28px;text-align:center">${effectDef.icon}</div>
