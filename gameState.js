@@ -16,7 +16,7 @@ export const TOTAL_BATTLES = BATTLES.length;
 
 export function createInitialState() {
   return {
-    phase: 'title',       // title | battle | shop | gameover | gameclear
+    phase: 'title',
     battleIndex: 0,
     player: {
       hp: 30,
@@ -31,20 +31,21 @@ export function createInitialState() {
       sprite: '',
       difficulty: 1,
     },
-    deck: [],         // player's full deck
-    hand: [],         // current hand (up to 10 cards)
-    drawPile: [],     // remaining draw pile this battle
+    deck: [],         // player's deck
+    enemyDeck: [],    // enemy's own deck (separate from player)
+    hand: [],
+    drawPile: [],
     discardPile: [],
     selectedIndices: [],
     artifacts: [],
     turn: 0,
-    roundLog: [],     // {playerHand, enemyHand, playerDmg, enemyDmg, winner}
+    roundLog: [],
     battleReward: 0,
     shopOfferings: {
-      effects: [],    // {card, effect}
+      effects: [],
       artifacts: [],
-      removeCards: [], // cards available for removal (cost)
-      addCards: [],    // shop cards to buy
+      removeCards: [],
+      addCards: [],
     },
     rerollCost: 5,
   };
@@ -55,6 +56,7 @@ export function initGame(state) {
   const fresh = createInitialState();
   fresh.phase = 'battle';
   fresh.deck = createDeck();
+  fresh.enemyDeck = createDeck();   // enemy gets its own independent deck
   fresh.player = { hp: 30, maxHp: 30, currency: 0, totalDamageDealt: 0 };
   fresh.artifacts = [];
   fresh.battleIndex = 0;
@@ -96,7 +98,7 @@ export function drawToTen(state) {
   state.selectedIndices = [];
 }
 
-/** Bot selects 5 cards optimally-ish */
+/** Bot selects 5 cards from given deck */
 export function botSelectCards(deck, artifacts) {
   const hand = shuffle([...deck]).slice(0, 10);
   return botPickBest(hand, artifacts);
@@ -132,8 +134,8 @@ export function processTurn(state) {
   const playerHandEval = evaluateHand(selectedCards);
   const playerResult = applyCardEffects(selectedCards, playerHandEval, playerHandEval.strength, state.artifacts);
 
-  // Bot plays
-  const botResult = botPickBest(shuffle([...state.deck]).slice(0, 10), []);
+  // Bot plays from its own independent deck
+  const botResult = botPickBest(shuffle([...state.enemyDeck]).slice(0, 10), []);
   const enemyHandEval = botResult.handEval;
   const enemyStrength = getEffectiveStrength(enemyHandEval.name, enemyHandEval.strength, []);
   const enemyDamage = enemyStrength;
@@ -205,7 +207,8 @@ export function processTurn(state) {
 
 /** After battle won, compute reward */
 export function computeReward(state) {
-  const baseReward = state.player.totalDamageDealt;
+  // Base reward = total damage dealt × 2
+  const baseReward = state.player.totalDamageDealt * 2;
   let reward = baseReward;
   const goldMulti = state.artifacts.find(a => a.id === 'GOLD_MULTIPLIER');
   if (goldMulti) reward = Math.floor(reward * 1.2);
