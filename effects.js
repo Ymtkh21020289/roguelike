@@ -48,7 +48,9 @@ export const CARD_EFFECTS = [
     name: '二重紋',
     icon: '⚜️',
     cost: 25,
-    description: (s1, s2) => `このカードは【${s1}】と【${s2}】を同時に満たすことができる。`,
+    description: (s1, s2) => s1 && s2
+      ? `このカードは【${s1}】と【${s2}】の両スートとして扱われる。`
+      : 'このカードは選んだ2つのスートを同時に満たすことができる。',
     color: '#c040ff',
     paramType: 'dualSuit',
     apply: (s1, s2) => ({ type: 'DUAL_SUIT', suits: [s1, s2] })
